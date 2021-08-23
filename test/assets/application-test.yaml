@@ -1,0 +1,19 @@
+neve:
+  trace:
+    serviceName: "neve-trace-test"
+    reporter:
+      name: remote
+      value: "http://example.org/jaeger"
+    sampler:
+      # ConstSampler always makes the same sampling decision for all trace IDs. it can be configured to either sample all traces, or to sample none.
+      name: const
+      value: true
+      # RemotelyControlledSampler uses one of the other simpler samplers and periodically updates it by polling an external server. This allows dynamic control of the sampling strategies.
+      #name: remote
+      #value:
+      # ProbabilisticSampler uses a fixed sampling rate as a probability for a given trace to be sampled. The actual decision is made by comparing the trace ID with a random number multiplied by the sampling rate.
+      #name: probabilistic
+      #value:
+      # RateLimitingSampler can be used to allow only a certain fixed number of traces to be sampled per second.
+      #name: ratelimiting
+      #value:
