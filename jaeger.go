@@ -13,6 +13,9 @@ import (
 	"github.com/uber/jaeger-client-go/transport"
 	"github.com/xfali/fig"
 	"github.com/xfali/neve-core/bean"
+	"github.com/xfali/neve-trace/gintrace"
+	"github.com/xfali/neve-trace/resttrace"
+	"github.com/xfali/neve-utils/neverror"
 	"io"
 	"strconv"
 	"strings"
@@ -24,11 +27,18 @@ const (
 	keySamplerValue  = "neve.trace.sampler.value"
 	keyReporterName  = "neve.trace.reporter.name"
 	keyReporterValue = "neve.trace.reporter.value"
+
+	keyGinEnable        = "neve.trace.gin.enable"
+	keyRestClientEnable = "neve.trace.restclient.enable"
 )
 
 type JaegerProcessor struct {
 	tracer opentracing.Tracer
 	closer io.Closer
+}
+
+func NewJaegerProcessor() *JaegerProcessor {
+	return &JaegerProcessor{}
 }
 
 // 初始化对象处理器
@@ -47,6 +57,18 @@ func (p *JaegerProcessor) Init(conf fig.Properties, container bean.Container) er
 	}
 	p.tracer = tracer
 	p.closer = closer
+
+	// register trace
+	neverror.PanicError(container.Register(p.tracer))
+
+	// gin trace is enable, register default GinTrace
+	if strings.ToLower(conf.Get(keyGinEnable, "")) == "true" {
+		neverror.PanicError(container.Register(gintrace.NewGinTrace(p.tracer)))
+	}
+	// gin trace is enable, register default RestClientTrace
+	if strings.ToLower(conf.Get(keyRestClientEnable, "")) == "true" {
+		neverror.PanicError(container.Register(resttrace.NewRestClientTraceFilter(p.tracer)))
+	}
 	return nil
 }
 

@@ -17,3 +17,23 @@ neve:
       # RateLimitingSampler can be used to allow only a certain fixed number of traces to be sampled per second.
       #name: ratelimiting
       #value:
+
+    gin:
+      enable: true
+    restclient:
+      enable: true
+
+  web:
+    log:
+      requestHeader: true
+      requestBody: true
+      responseHeader: true
+      responseBody: true
+      level: "info"
+
+    server:
+      contextPath: ""
+      port: 8080
+      readTimeout: 15
+      writeTimeout: 15
+      idleTimeout: 15
