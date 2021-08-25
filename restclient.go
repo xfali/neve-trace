@@ -3,7 +3,7 @@
 // @version V1.0
 // Description:
 
-package resttrace
+package nevetrace
 
 import (
 	"github.com/opentracing/opentracing-go"
@@ -57,13 +57,17 @@ func (f *restClientTraceFilter) Filter(request *http.Request, fc restclient.Filt
 	return fc.Filter(request)
 }
 
-func OptSetTracer(tracer opentracing.Tracer) RestClientOpt {
+type restclientOpts struct{}
+
+var RestClientOpts restclientOpts
+
+func (opt restclientOpts) WithTracer(tracer opentracing.Tracer) RestClientOpt {
 	return func(f *restClientTraceFilter) {
 		f.tracer = tracer
 	}
 }
 
-func OptSetLogger(logger xlog.Logger) RestClientOpt {
+func (opt restclientOpts) WithLogger(logger xlog.Logger) RestClientOpt {
 	return func(f *restClientTraceFilter) {
 		f.logger = logger
 	}

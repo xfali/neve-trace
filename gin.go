@@ -3,7 +3,7 @@
 // @version V1.0
 // Description:
 
-package gintrace
+package nevetrace
 
 import (
 	"context"
@@ -89,19 +89,23 @@ func defaultErrFunc(status int) bool {
 	return status >= http.StatusBadRequest
 }
 
-func OptSetTracer(tracer opentracing.Tracer) GinOpt {
+type ginOpts struct{}
+
+var GinOpts ginOpts
+
+func (opt ginOpts) WithTracer(tracer opentracing.Tracer) GinOpt {
 	return func(f *ginTraceFilter) {
 		f.tracer = tracer
 	}
 }
 
-func OptSetLogger(logger xlog.Logger) GinOpt {
+func (opt ginOpts) WithLogger(logger xlog.Logger) GinOpt {
 	return func(f *ginTraceFilter) {
 		f.logger = logger
 	}
 }
 
-func OptSeErrFunc(errfunc func(httpStatus int) bool) GinOpt {
+func (opt ginOpts) WithErrFunc(errfunc func(httpStatus int) bool) GinOpt {
 	return func(f *ginTraceFilter) {
 		f.errFunc = errfunc
 	}

@@ -3,7 +3,7 @@
 // @version V1.0
 // Description:
 
-package trace
+package nevetrace
 
 import "github.com/xfali/xlog"
 
@@ -13,7 +13,7 @@ type JaegerLogger struct {
 
 func NewLogger() *JaegerLogger {
 	return &JaegerLogger{
-		logger: xlog.GetLogger().WithDepth(5),
+		logger: xlog.GetLogger().WithDepth(2),
 	}
 }
 

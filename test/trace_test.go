@@ -11,8 +11,6 @@ import (
 	"github.com/xfali/neve-core"
 	"github.com/xfali/neve-core/processor"
 	"github.com/xfali/neve-trace"
-	"github.com/xfali/neve-trace/gintrace"
-	"github.com/xfali/neve-trace/resttrace"
 	"github.com/xfali/neve-utils/neverror"
 	"github.com/xfali/neve-web/gineve"
 	"github.com/xfali/neve-web/gineve/midware/loghttp"
@@ -28,8 +26,8 @@ type webBean struct {
 	V          string
 	client     restclient.RestClient
 	HttpLogger loghttp.HttpLogger         `inject:""`
-	Trace      gintrace.GinTracer         `inject:""`
-	Filter     resttrace.RestClientTracer `inject:""`
+	Trace      nevetrace.GinTracer         `inject:""`
+	Filter     nevetrace.RestClientTracer `inject:""`
 
 	count int
 }
@@ -46,11 +44,11 @@ func (b *webBean) HttpRoutes(engine gin.IRouter) {
 		b.V = "hello world"
 	}
 	engine.GET("test", b.HttpLogger.LogHttp(), b.Trace.Trace("/test"), func(ctx *gin.Context) {
-		sp := gintrace.GetSpan(ctx)
+		sp := nevetrace.GetSpan(ctx)
 		if sp == nil {
 			xlog.Fatalln("sp is nil")
 		}
-		status, err := b.client.GetContext(gintrace.ContextWithSpan(context.Background(), ctx), nil, "http://localhost:8080/api", nil)
+		status, err := b.client.GetContext(nevetrace.ContextWithSpan(context.Background(), ctx), nil, "http://localhost:8080/api", nil)
 		if err != nil {
 			xlog.Fatalln("get api failed: ", err)
 		}
@@ -58,11 +56,11 @@ func (b *webBean) HttpRoutes(engine gin.IRouter) {
 	})
 
 	engine.GET("test2", b.HttpLogger.LogHttp(), b.Trace.Trace("/test2"), func(ctx *gin.Context) {
-		sp := gintrace.GetSpan(ctx)
+		sp := nevetrace.GetSpan(ctx)
 		if sp == nil {
 			xlog.Fatalln("sp is nil")
 		}
-		status, err := b.client.GetContext(gintrace.ContextWithSpan(context.Background(), ctx), nil, "http://localhost:8079/api", nil)
+		status, err := b.client.GetContext(nevetrace.ContextWithSpan(context.Background(), ctx), nil, "http://localhost:8079/api", nil)
 		if err != nil {
 			xlog.Fatalln("get api failed: ", err)
 		}
@@ -70,7 +68,7 @@ func (b *webBean) HttpRoutes(engine gin.IRouter) {
 	})
 
 	engine.GET("api", b.HttpLogger.LogHttp(), b.Trace.Trace("/api"), func(context *gin.Context) {
-		sp := gintrace.GetSpan(context)
+		sp := nevetrace.GetSpan(context)
 		if sp == nil {
 			xlog.Fatalln("sp is nil")
 		}
@@ -88,7 +86,7 @@ func TestClientAndServer(t *testing.T) {
 	app := neve.NewFileConfigApplication("assets/application-test.yaml")
 	neverror.PanicError(app.RegisterBean(gineve.NewProcessor()))
 	neverror.PanicError(app.RegisterBean(processor.NewValueProcessor()))
-	neverror.PanicError(app.RegisterBean(trace.NewJaegerProcessor()))
+	neverror.PanicError(app.RegisterBean(nevetrace.NewJaegerProcessor()))
 
 	neverror.PanicError(app.RegisterBean(&webBean{}))
 	err := app.Run()
@@ -102,7 +100,7 @@ func TestClientAnd2Server(t *testing.T) {
 		app := neve.NewFileConfigApplication("assets/application-test2.yaml")
 		neverror.PanicError(app.RegisterBean(gineve.NewProcessor()))
 		neverror.PanicError(app.RegisterBean(processor.NewValueProcessor()))
-		neverror.PanicError(app.RegisterBean(trace.NewJaegerProcessor()))
+		neverror.PanicError(app.RegisterBean(nevetrace.NewJaegerProcessor()))
 
 		neverror.PanicError(app.RegisterBean(&webBean{}))
 		err := app.Run()
@@ -114,7 +112,7 @@ func TestClientAnd2Server(t *testing.T) {
 	app := neve.NewFileConfigApplication("assets/application-test.yaml")
 	neverror.PanicError(app.RegisterBean(gineve.NewProcessor()))
 	neverror.PanicError(app.RegisterBean(processor.NewValueProcessor()))
-	neverror.PanicError(app.RegisterBean(trace.NewJaegerProcessor()))
+	neverror.PanicError(app.RegisterBean(nevetrace.NewJaegerProcessor()))
 
 	neverror.PanicError(app.RegisterBean(&webBean{}))
 	err := app.Run()
