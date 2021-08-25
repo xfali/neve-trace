@@ -9,10 +9,11 @@ require (
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/xfali/fig v0.1.2
+	github.com/xfali/goutils v0.1.5
 	github.com/xfali/neve-core v0.2.5
 	github.com/xfali/neve-utils v0.0.1
 	github.com/xfali/neve-web v0.0.8
-	github.com/xfali/restclient v0.4.1
+	github.com/xfali/restclient v0.4.2
 	github.com/xfali/xlog v0.1.6
 	go.uber.org/atomic v1.9.0 // indirect
 )

@@ -23,9 +23,9 @@ import (
 
 const (
 	keyServiceName   = "neve.trace.serviceName"
-	keySamplerName   = "neve.trace.sampler.name"
+	keySamplerName   = "neve.trace.sampler.type"
 	keySamplerValue  = "neve.trace.sampler.value"
-	keyReporterName  = "neve.trace.reporter.name"
+	keyReporterName  = "neve.trace.reporter.type"
 	keyReporterValue = "neve.trace.reporter.value"
 
 	keyGinEnable        = "neve.trace.gin.enable"
@@ -118,9 +118,9 @@ func initTrace(conf fig.Properties) (opentracing.Tracer, io.Closer, error) {
 		return nil, nil, fmt.Errorf("Neve trace: %s missing, please set it in application. ", keyReporterName)
 	}
 	rv := conf.Get(keyReporterValue, "")
-	if rv == "" {
-		return nil, nil, fmt.Errorf("Neve trace: %s missing, please set it in application. ", keyReporterValue)
-	}
+	//if rv == "" {
+	//	return nil, nil, fmt.Errorf("Neve trace: %s missing, please set it in application. ", keyReporterValue)
+	//}
 
 	reporter, err := selectReporter(rn, rv)
 	if err != nil {
@@ -135,6 +135,8 @@ func selectReporter(name string, value string) (jaeger.Reporter, error) {
 	case "remote":
 		sender := transport.NewHTTPTransport(value)
 		return jaeger.NewRemoteReporter(sender), nil
+	case "inmemory":
+		return jaeger.NewInMemoryReporter(), nil
 	}
 	return nil, fmt.Errorf("Reporter type: %s value: %s not support. ", name, value)
 }

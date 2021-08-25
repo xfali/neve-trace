@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
+	"github.com/xfali/goutils/idUtil"
 	"github.com/xfali/neve-core/appcontext"
 	"github.com/xfali/xlog"
 )
@@ -51,8 +52,12 @@ func (f *ginTraceFilter) Trace(name string) gin.HandlerFunc {
 		sp := f.tracer.StartSpan(name, ext.RPCServerOption(wireContext))
 		defer sp.Finish()
 
+		sp.SetTag("jaeger-debug-id", idUtil.RandomId(16))
+		sp.SetTag("http.url", c.Request.RequestURI)
+		sp.SetTag("http.method", c.Request.Method)
 		c.Set(GinContextTraceKey, sp)
 		c.Next()
+		sp.SetTag("http.status_code", c.Writer.Status())
 	}
 }
 
