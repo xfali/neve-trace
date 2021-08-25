@@ -2,10 +2,9 @@ neve:
   trace:
     serviceName: "neve-trace-test"
     reporter:
-      #type: remote
-      #value: "http://example.org/jaeger"
-      type: inmemory
-      value: ""
+      type: remote
+      value: "http://localhost:14268/api/traces"
+      #type: inmemory
     sampler:
       # ConstSampler always makes the same sampling decision for all trace IDs. it can be configured to either sample all traces, or to sample none.
       type: const

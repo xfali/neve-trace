@@ -134,7 +134,7 @@ func selectReporter(name string, value string) (jaeger.Reporter, error) {
 	switch name {
 	case "remote":
 		sender := transport.NewHTTPTransport(value)
-		return jaeger.NewRemoteReporter(sender), nil
+		return jaeger.NewRemoteReporter(sender, jaeger.ReporterOptions.Logger(NewLogger())), nil
 	case "inmemory":
 		return jaeger.NewInMemoryReporter(), nil
 	}
