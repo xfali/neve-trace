@@ -21,6 +21,7 @@ import (
 	"github.com/xfali/xlog"
 	"net/http"
 	"testing"
+	"time"
 )
 
 type webBean struct {
@@ -29,6 +30,8 @@ type webBean struct {
 	HttpLogger loghttp.HttpLogger         `inject:""`
 	Trace      gintrace.GinTracer         `inject:""`
 	Filter     resttrace.RestClientTracer `inject:""`
+
+	count int
 }
 
 func (b *webBean) BeanAfterSet() error {
@@ -47,11 +50,23 @@ func (b *webBean) HttpRoutes(engine gin.IRouter) {
 		if sp == nil {
 			xlog.Fatalln("sp is nil")
 		}
-		_, err := b.client.GetContext(gintrace.ContextWithSpan(context.Background(), ctx), nil, "http://localhost:8080/api", nil)
+		status, err := b.client.GetContext(gintrace.ContextWithSpan(context.Background(), ctx), nil, "http://localhost:8080/api", nil)
 		if err != nil {
 			xlog.Fatalln("get api failed: ", err)
 		}
-		ctx.JSON(http.StatusOK, result.Ok(b.V))
+		ctx.JSON(status, result.Ok(b.V))
+	})
+
+	engine.GET("test2", b.HttpLogger.LogHttp(), b.Trace.Trace("/test2"), func(ctx *gin.Context) {
+		sp := gintrace.GetSpan(ctx)
+		if sp == nil {
+			xlog.Fatalln("sp is nil")
+		}
+		status, err := b.client.GetContext(gintrace.ContextWithSpan(context.Background(), ctx), nil, "http://localhost:8079/api", nil)
+		if err != nil {
+			xlog.Fatalln("get api failed: ", err)
+		}
+		ctx.JSON(status, result.Ok(b.V))
 	})
 
 	engine.GET("api", b.HttpLogger.LogHttp(), b.Trace.Trace("/api"), func(context *gin.Context) {
@@ -59,11 +74,43 @@ func (b *webBean) HttpRoutes(engine gin.IRouter) {
 		if sp == nil {
 			xlog.Fatalln("sp is nil")
 		}
+		time.Sleep(1 * time.Second)
+		b.count++
+		if b.count % 2 == 0 {
+			context.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
 		context.JSON(http.StatusOK, result.Ok(b.V))
 	})
 }
 
 func TestClientAndServer(t *testing.T) {
+	app := neve.NewFileConfigApplication("assets/application-test.yaml")
+	neverror.PanicError(app.RegisterBean(gineve.NewProcessor()))
+	neverror.PanicError(app.RegisterBean(processor.NewValueProcessor()))
+	neverror.PanicError(app.RegisterBean(trace.NewJaegerProcessor()))
+
+	neverror.PanicError(app.RegisterBean(&webBean{}))
+	err := app.Run()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestClientAnd2Server(t *testing.T) {
+	go func() {
+		app := neve.NewFileConfigApplication("assets/application-test2.yaml")
+		neverror.PanicError(app.RegisterBean(gineve.NewProcessor()))
+		neverror.PanicError(app.RegisterBean(processor.NewValueProcessor()))
+		neverror.PanicError(app.RegisterBean(trace.NewJaegerProcessor()))
+
+		neverror.PanicError(app.RegisterBean(&webBean{}))
+		err := app.Run()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
 	app := neve.NewFileConfigApplication("assets/application-test.yaml")
 	neverror.PanicError(app.RegisterBean(gineve.NewProcessor()))
 	neverror.PanicError(app.RegisterBean(processor.NewValueProcessor()))

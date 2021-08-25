@@ -63,11 +63,11 @@ func (p *JaegerProcessor) Init(conf fig.Properties, container bean.Container) er
 
 	// gin trace is enable, register default GinTrace
 	if strings.ToLower(conf.Get(keyGinEnable, "")) == "true" {
-		neverror.PanicError(container.Register(gintrace.NewGinTrace(p.tracer)))
+		neverror.PanicError(container.Register(gintrace.NewGinTrace(gintrace.OptSetTracer(p.tracer))))
 	}
 	// gin trace is enable, register default RestClientTrace
 	if strings.ToLower(conf.Get(keyRestClientEnable, "")) == "true" {
-		neverror.PanicError(container.Register(resttrace.NewRestClientTraceFilter(p.tracer)))
+		neverror.PanicError(container.Register(resttrace.NewRestClientTraceFilter(resttrace.OptSetTracer(p.tracer))))
 	}
 	return nil
 }

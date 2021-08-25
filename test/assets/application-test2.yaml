@@ -1,0 +1,40 @@
+neve:
+  trace:
+    serviceName: "neve-trace-service2"
+    reporter:
+      type: remote
+      value: "http://localhost:14268/api/traces"
+      #type: inmemory
+    sampler:
+      # ConstSampler always makes the same sampling decision for all trace IDs. it can be configured to either sample all traces, or to sample none.
+      type: const
+      value: true
+      # RemotelyControlledSampler uses one of the other simpler samplers and periodically updates it by polling an external server. This allows dynamic control of the sampling strategies.
+      #type: remote
+      #value:
+      # ProbabilisticSampler uses a fixed sampling rate as a probability for a given trace to be sampled. The actual decision is made by comparing the trace ID with a random number multiplied by the sampling rate.
+      #type: probabilistic
+      #value:
+      # RateLimitingSampler can be used to allow only a certain fixed number of traces to be sampled per second.
+      #type: ratelimiting
+      #value:
+
+    gin:
+      enable: true
+    restclient:
+      enable: true
+
+  web:
+    log:
+      requestHeader: true
+      requestBody: true
+      responseHeader: true
+      responseBody: true
+      level: "info"
+
+    server:
+      contextPath: ""
+      port: 8079
+      readTimeout: 15
+      writeTimeout: 15
+      idleTimeout: 15

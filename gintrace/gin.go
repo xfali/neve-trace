@@ -13,6 +13,7 @@ import (
 	"github.com/xfali/goutils/idUtil"
 	"github.com/xfali/neve-core/appcontext"
 	"github.com/xfali/xlog"
+	"net/http"
 )
 
 const (
@@ -26,13 +27,22 @@ type GinTracer interface {
 type ginTraceFilter struct {
 	logger xlog.Logger
 	tracer opentracing.Tracer
+
+	errFunc func(httpStatus int) bool
 }
 
-func NewGinTrace(tracer opentracing.Tracer) *ginTraceFilter {
-	return &ginTraceFilter{
-		logger: xlog.GetLogger(),
-		tracer: tracer,
+type GinOpt func(f *ginTraceFilter)
+
+func NewGinTrace(opts ...GinOpt) *ginTraceFilter {
+	ret := &ginTraceFilter{
+		logger:  xlog.GetLogger(),
+		tracer:  opentracing.GlobalTracer(),
+		errFunc: defaultErrFunc,
 	}
+	for _, opt := range opts {
+		opt(ret)
+	}
+	return ret
 }
 
 func (f *ginTraceFilter) RegisterFunction(registry appcontext.InjectFunctionRegistry) error {
@@ -58,6 +68,9 @@ func (f *ginTraceFilter) Trace(name string) gin.HandlerFunc {
 		c.Set(GinContextTraceKey, sp)
 		c.Next()
 		sp.SetTag("http.status_code", c.Writer.Status())
+		if f.errFunc(c.Writer.Status()) {
+			sp.SetTag("error", true)
+		}
 	}
 }
 
@@ -70,4 +83,26 @@ func GetSpan(c *gin.Context) opentracing.Span {
 
 func ContextWithSpan(ctx context.Context, c *gin.Context) context.Context {
 	return opentracing.ContextWithSpan(ctx, GetSpan(c))
+}
+
+func defaultErrFunc(status int) bool {
+	return status >= http.StatusBadRequest
+}
+
+func OptSetTracer(tracer opentracing.Tracer) GinOpt {
+	return func(f *ginTraceFilter) {
+		f.tracer = tracer
+	}
+}
+
+func OptSetLogger(logger xlog.Logger) GinOpt {
+	return func(f *ginTraceFilter) {
+		f.logger = logger
+	}
+}
+
+func OptSeErrFunc(errfunc func(httpStatus int) bool) GinOpt {
+	return func(f *ginTraceFilter) {
+		f.errFunc = errfunc
+	}
 }

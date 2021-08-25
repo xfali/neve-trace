@@ -20,11 +20,17 @@ type restClientTraceFilter struct {
 	tracer opentracing.Tracer
 }
 
-func NewRestClientTraceFilter(tracer opentracing.Tracer) *restClientTraceFilter {
-	return &restClientTraceFilter{
+type RestClientOpt func(f *restClientTraceFilter)
+
+func NewRestClientTraceFilter(opts ...RestClientOpt) *restClientTraceFilter {
+	ret := &restClientTraceFilter{
 		logger: xlog.GetLogger(),
-		tracer: tracer,
+		tracer: opentracing.GlobalTracer(),
 	}
+	for _, opt := range opts {
+		opt(ret)
+	}
+	return ret
 }
 
 func (f *restClientTraceFilter) RegisterFunction(registry appcontext.InjectFunctionRegistry) error {
@@ -49,4 +55,16 @@ func (f *restClientTraceFilter) Filter(request *http.Request, fc restclient.Filt
 	}
 
 	return fc.Filter(request)
+}
+
+func OptSetTracer(tracer opentracing.Tracer) RestClientOpt {
+	return func(f *restClientTraceFilter) {
+		f.tracer = tracer
+	}
+}
+
+func OptSetLogger(logger xlog.Logger) RestClientOpt {
+	return func(f *restClientTraceFilter) {
+		f.logger = logger
+	}
 }
